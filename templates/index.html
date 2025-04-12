@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Traffic Sign System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --danger: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .sign-display {
+            background: white;
+            border-radius: var(--radius);
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .sign-display.active {
+            background: #e9f5ff;
+            border: 2px solid var(--primary);
+        }
+        
+        .sign-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .sign-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .penalty-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        
+        .penalty-amount {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--danger);
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Traffic Sign Detection System</h1>
+            <p>RFID-based sign detection with real-time alerts</p>
+        </header>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn">
+                <span>▶</span> Start System
+            </button>
+            <button class="btn btn-danger" id="stopBtn" disabled>
+                <span>⏹</span> Stop System
+            </button>
+        </div>
+        
+        <div class="sign-display" id="signDisplay">
+            <div class="sign-icon">🚦</div>
+            <div class="sign-text">No sign detected</div>
+            <div class="sign-description">Drive to detect traffic signs</div>
+        </div>
+        
+        <div class="penalty-card">
+            <h2>Penalty Summary</h2>
+            <div class="penalty-amount" id="penaltyAmount">₹0</div>
+            <div id="penaltyHistory"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="alertModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="alertTitle">Traffic Sign Detected</h2>
+            </div>
+            <div class="modal-body">
+                <div class="sign-icon" id="modalSignIcon">⚠️</div>
+                <p id="alertMessage">Please follow traffic rules</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="acceptBtn">Accept</button>
+                <button class="btn btn-danger" id="ignoreBtn">Ignore</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Payment Required</h2>
+            </div>
+            <div class="modal-body">
+                <p>Total penalty amount:</p>
+                <div class="penalty-amount" id="finalPenalty">₹0</div>
+                <p>Please pay the amount to continue</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="payBtn">I Paid</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let penalty = 0;
+        let systemActive = false;
+        
+        // System control buttons
+        document.getElementById('startBtn').addEventListener('click', startSystem);
+        document.getElementById('stopBtn').addEventListener('click', stopSystem);
+        
+        // Alert modal buttons
+        document.getElementById('acceptBtn').addEventListener('click', acceptAlert);
+        document.getElementById('ignoreBtn').addEventListener('click', ignoreAlert);
+        
+        // Payment modal button
+        document.getElementById('payBtn').addEventListener('click', completePayment);
+        
+        function startSystem() {
+            systemActive = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            socket.emit('system_control', 'start');
+        }
+        
+        function stopSystem() {
+            systemActive = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            socket.emit('system_control', 'stop');
+            
+            if (penalty > 0) {
+                document.getElementById('finalPenalty').textContent = `₹${penalty}`;
+                document.getElementById('paymentModal').classList.add('active');
+            }
+        }
+        
+        function acceptAlert() {
+            document.getElementById('alertModal').classList.remove('active');
+            resetSignDisplay();
+        }
+        
+        function ignoreAlert() {
+            penalty += currentPenalty;
+            updatePenaltyDisplay();
+            document.getElementById('alertModal').classList.remove('active');
+            resetSignDisplay();
+        }
+        
+        function completePayment() {
+            penalty = 0;
+            updatePenaltyDisplay();
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+        
+        let currentPenalty = 0;
+        socket.on('sign_detected', function(data) {
+            if (!systemActive) return;
+            
+            // Update sign display
+            document.getElementById('signDisplay').classList.add('active');
+            document.querySelector('.sign-icon').textContent = data.icon;
+            document.querySelector('.sign-text').textContent = data.title;
+            document.querySelector('.sign-description').textContent = data.description;
+            
+            // Show alert modal
+            document.getElementById('alertTitle').textContent = data.title;
+            document.getElementById('alertMessage').textContent = data.description;
+            document.getElementById('modalSignIcon').textContent = data.icon;
+            document.getElementById('alertModal').classList.add('active');
+            
+            currentPenalty = data.penalty;
+        });
+        
+        function resetSignDisplay() {
+            setTimeout(() => {
+                document.getElementById('signDisplay').classList.remove('active');
+                document.querySelector('.sign-icon').textContent = '🚦';
+                document.querySelector('.sign-text').textContent = 'No sign detected';
+                document.querySelector('.sign-description').textContent = 'Drive to detect traffic signs';
+            }, 1000);
+        }
+        
+        function updatePenaltyDisplay() {
+            document.getElementById('penaltyAmount').textContent = `₹${penalty}`;
+            
+            if (penalty > 0) {
+                const history = document.getElementById('penaltyHistory');
+                const entry = document.createElement('div');
+                entry.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                        <span>${document.getElementById('alertTitle').textContent}</span>
+                        <span style="color: var(--danger); font-weight: 500;">₹${currentPenalty}</span>
+                    </div>
+                `;
+                history.prepend(entry);
+            }
+        }
+    </script>
+</body>
+</html>
