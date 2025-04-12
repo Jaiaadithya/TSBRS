@@ -1,0 +1,1 @@
+web: gunicorn server.traffic_ui_server:app
